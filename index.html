@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agent Cards — Kinetic Gain Protocol Suite</title>
+  <meta name="description" content="Agent Cards — open JSON specification, part of the Kinetic Gain Protocol Suite." />
+  <meta name="theme-color" content="#6d28d9" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Agent Cards — Kinetic Gain Protocol Suite" />
+  <meta property="og:url" content="https://agents.kineticgain.com/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="/" class="brand">
+        <span class="brand-mark">⌬</span>
+        <span class="brand-text">
+          <strong>Agent Cards</strong>
+          <small>Kinetic Gain Protocol Suite</small>
+        </span>
+      </a>
+      <nav class="nav-links">
+        <a href="#why">Why</a>
+        <a href="#spec">Spec</a>
+        <a href="#example">Example</a>
+        <a href="#tooling">Tooling</a>
+        <a class="cta" href="https://github.com/mizcausevic-dev/agent-cards-spec" target="_blank" rel="noreferrer">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-inner">
+        <span class="pill">v0.1 draft · core spec</span>
+        <h1>What does your AI agent<br><em>actually do?</em></h1>
+        <p class="lede"><strong>Agent Cards</strong> is an open JSON spec for declarative agent disclosure — capability surface, refusal taxonomy, tool inventory, memory persistence, autonomy level, deployment posture. HuggingFace gave models cards. Agents need the same.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="https://github.com/mizcausevic-dev/agent-cards-spec" target="_blank" rel="noreferrer">Read the spec</a>
+          <a class="btn btn-secondary" href="https://mizcausevic-dev.github.io/kinetic-gain-visualizer/?view=editor" target="_blank" rel="noreferrer">Try the visualizer</a>
+        </div>
+        <ul class="hero-bullets">
+          <li><span class="dot dot-accent"></span> Detect via <code>agent_card_version</code></li>
+          <li><span class="dot dot-accent"></span> Well-known: <code>/.well-known/agents/&lt;agent_id&gt;.json</code></li>
+          <li><span class="dot dot-accent"></span> Cross-referenced from <a href="https://github.com/mizcausevic-dev/ai-incident-card-spec" target="_blank" rel="noreferrer">AI Incident Cards</a> on failure</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="why" class="block">
+      <div class="block-inner">
+        <h2>Why a separate spec from model cards?</h2>
+        <p class="prose">Agents have a different disclosure surface than models. Tool surfaces, refusal behavior, memory persistence, deployment posture — none of these are captured by HuggingFace-style model cards. Agent Cards is the document that makes those properties machine-readable and comparable.</p>
+        <div class="grid grid-3">
+          <article class="card">
+            <h3>Agent identity</h3>
+            <p><code>agent.id</code>, semver <code>version</code>, <code>provider</code>, plain-text <code>description</code>. The fields a procurement reviewer reads first.</p>
+          </article>
+          <article class="card">
+            <h3>Capabilities</h3>
+            <p><code>capabilities.primary_purpose</code>, <code>models_used[]</code>, <code>tools[]</code>, <code>max_context_tokens</code>, <code>memory_persistence</code>, <code>autonomy_level</code>. The capability surface in machine-readable form.</p>
+          </article>
+          <article class="card">
+            <h3>Refusal taxonomy</h3>
+            <p><code>refusal_taxonomy[]</code> entries: <code>category</code> + <code>behavior</code> (<code>refuse_and_explain</code> / <code>escalate_to_human</code>). Forces vendors to enumerate what they refuse.</p>
+          </article>
+          <article class="card">
+            <h3>Tool surface</h3>
+            <p>Each tool: <code>name</code>, <code>side_effects</code>, optional <code>mcp_tool_card_uri</code>. Chain through to per-tool disclosure when present.</p>
+          </article>
+          <article class="card">
+            <h3>Deployment</h3>
+            <p><code>environment</code> (production / staging), <code>uptime_sla</code>, <code>regions[]</code>. The minimum operational claim a buyer needs.</p>
+          </article>
+          <article class="card">
+            <h3>Safety posture</h3>
+            <p><code>human_in_loop_required[]</code>, <code>audit_log_uri</code>, <code>incident_response_uri</code>. The fields that make incident response credible.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="spec" class="block block-tinted">
+      <div class="block-inner">
+        <h2>The required sections</h2>
+        <ol class="numbered">
+          <li><strong><code>agent_card_version</code></strong> — must be <code>"0.1"</code></li>
+          <li><strong><code>agent</code></strong> — id, name, version, provider, description, homepage</li>
+          <li><strong><code>capabilities</code></strong> — purpose, models used, tools, max context, memory persistence, autonomy level</li>
+          <li><strong><code>refusal_taxonomy</code></strong> — array of <code>{ category, behavior, example_prompts? }</code></li>
+          <li><strong><code>evaluations</code></strong> (optional) — third-party assessment results</li>
+          <li><strong><code>deployment</code></strong> — environment, uptime SLA, regions</li>
+          <li><strong><code>safety_posture</code></strong> — human-in-loop categories, audit log URI, incident response URI</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="example" class="block">
+      <div class="block-inner">
+        <h2>A canonical example</h2>
+        <pre class="code-block"><code>{
+  "agent_card_version": "0.1",
+  "agent": {
+    "id": "customer-support-tier-1",
+    "name": "Tier-1 Customer Support Agent",
+    "version": "2.4.1",
+    "provider": "Kinetic Gain",
+    "description": "First-line customer support. Handles account questions, billing lookups, product orientation. Escalates entitlement changes and refunds."
+  },
+  "capabilities": {
+    "primary_purpose": "Resolve common customer questions and triage incoming support tickets.",
+    "models_used": [
+      { "name": "claude-sonnet-4-6", "provider": "Anthropic", "role": "executor" },
+      { "name": "claude-haiku-4-5", "provider": "Anthropic", "role": "router" }
+    ],
+    "tools": [
+      { "name": "billing-lookup", "side_effects": "read",
+        "mcp_tool_card_uri": "https://billing.kineticgain.com/.well-known/mcp-tools/billing-lookup.json" },
+      { "name": "ticket-create", "side_effects": "mutating" }
+    ],
+    "max_context_tokens": 100000,
+    "memory_persistence": "session",
+    "autonomy_level": "supervised"
+  },
+  "refusal_taxonomy": [
+    { "category": "entitlement_change", "behavior": "escalate_to_human" },
+    { "category": "refund_request", "behavior": "escalate_to_human" },
+    { "category": "legal_advice", "behavior": "refuse_and_explain" }
+  ],
+  "deployment": { "environment": "production", "uptime_sla": "99.5%", "regions": ["us-east-1", "eu-west-1"] },
+  "safety_posture": {
+    "human_in_loop_required": ["entitlement_change", "refund_request", "account_deletion"]
+  }
+}</code></pre>
+      </div>
+    </section>
+
+    <section id="tooling" class="block block-dark">
+      <div class="block-inner">
+        <h2>Tooling around the spec</h2>
+        <div class="grid grid-3">
+          <a class="card card-dark" href="https://github.com/mizcausevic-dev/agent-cards-spec" target="_blank" rel="noreferrer">
+            <div class="card-eyebrow">Specification</div>
+            <h3>agent-cards-spec</h3>
+            <p>Normative spec, JSON Schema 2020-12, canonical examples. AGPL-3.0 for spec text; implementations unrestricted.</p>
+            <span class="link">View repo →</span>
+          </a>
+          <a class="card card-dark" href="https://mizcausevic-dev.github.io/kinetic-gain-visualizer/" target="_blank" rel="noreferrer">
+            <div class="card-eyebrow">Visualizer</div>
+            <h3>kinetic-gain-visualizer</h3>
+            <p>Unified visualizer for all 10 specs. Auto-detects via <code>agent_card_version</code> and renders a procurement-grade view.</p>
+            <span class="link">Open visualizer →</span>
+          </a>
+          <a class="card card-dark" href="https://github.com/mizcausevic-dev/mcp-kinetic-gain" target="_blank" rel="noreferrer">
+            <div class="card-eyebrow">MCP server</div>
+            <h3>mcp-kinetic-gain</h3>
+            <p>34 tools across 8 specs. Drops into Claude Desktop / Cursor / any MCP-compatible client via stdio with one config entry.</p>
+            <span class="link">View on GitHub →</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-inner block-narrow">
+        <h2>About the Kinetic Gain Protocol Suite</h2>
+        <p class="prose">
+          Agent Cards is one of <strong>ten open JSON specifications</strong> in the Kinetic Gain Protocol Suite. Five core specs plus the <a href="https://tutor.kineticgain.com" target="_blank" rel="noreferrer">EdTech trio</a>, the <a href="https://clinical.kineticgain.com" target="_blank" rel="noreferrer">HealthTech extension</a>, and the cross-cutting <a href="https://incidents.kineticgain.com" target="_blank" rel="noreferrer">Incident Card</a>. <strong>Front door: <a href="https://suite.kineticgain.com" target="_blank" rel="noreferrer">suite.kineticgain.com</a></strong>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <small>© 2026 Miz Causevic · <a href="https://kineticgain.com" target="_blank" rel="noreferrer">kineticgain.com</a> · <a href="https://github.com/mizcausevic-dev" target="_blank" rel="noreferrer">GitHub</a> · <a href="https://www.linkedin.com/in/mirzacausevic/" target="_blank" rel="noreferrer">LinkedIn</a></small>
+      <small class="code">agents.kineticgain.com · Agent Cards v0.1</small>
+    </div>
+  </footer>
+</body>
+</html>
